@@ -1,0 +1,19 @@
+# SymbiYosys: core invariants for every possible instruction stream.
+# The instruction word is a free input, so the proof covers all programs.
+[options]
+mode prove
+depth 10
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal -sv weft_regfile.v weft_timer.v weft_crc.v weft_core.v weft_core_formal.sv
+prep -top weft_core_formal
+
+[files]
+../src/weft_regfile.v
+../src/weft_timer.v
+../src/weft_crc.v
+../src/weft_core.v
+weft_core_formal.sv

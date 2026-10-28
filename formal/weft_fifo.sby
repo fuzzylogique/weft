@@ -1,0 +1,15 @@
+# SymbiYosys: FIFO flags and counts are consistent; data comes out in order.
+[options]
+mode prove
+depth 8
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal -sv weft_fifo.v weft_fifo_formal.sv
+prep -top weft_fifo_formal
+
+[files]
+../src/weft_fifo.v
+weft_fifo_formal.sv

@@ -1,0 +1,28 @@
+// Project settings for Zed (https://zed.dev/docs/configuring-zed).
+// Verilog syntax comes from the "verilog" extension, installed automatically.
+{
+  "auto_install_extensions": { "verilog": true, "toml": true, "make": true },
+  "file_types": {
+    "Verilog": ["*.v", "*.vh"],
+    "Assembly": ["*.asm", "*.inc"],
+    "JSON": ["*.sby"]
+  },
+  "languages": {
+    "Python": {
+      "tab_size": 4,
+      "format_on_save": "off"
+    },
+    "Verilog": { "tab_size": 2 }
+  },
+  "lsp": {
+    "basedpyright": {
+      "settings": {
+        "python": { "pythonPath": "/opt/anaconda3/envs/jsasic/bin/python" },
+        "basedpyright.analysis": { "extraPaths": ["sw"] }
+      }
+    }
+  },
+  "terminal": {
+    "env": { "PATH": "/opt/anaconda3/envs/jsasic/bin:${PATH}" }
+  }
+}

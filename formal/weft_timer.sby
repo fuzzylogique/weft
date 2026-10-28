@@ -1,0 +1,16 @@
+# SymbiYosys: the bit timer ticks exactly every PERIOD cycles after TSET.
+[options]
+mode prove
+depth 12
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal -sv weft_timer.v weft_timer_formal.sv
+chparam -set PERIOD 3 weft_timer_formal
+prep -top weft_timer_formal
+
+[files]
+../src/weft_timer.v
+weft_timer_formal.sv

@@ -1,0 +1,22 @@
+# Program-level proof: the core running sw/programs/uart_tx.asm (assembled with
+# BIT=4, the smallest period the per-bit loop allows, so a frame fits the bound) is a correct 8N1 transmitter for EVERY
+# byte value: each of the 10 bits lasts exactly BIT cycles and carries the
+# right value. This verifies hardware and firmware together.
+[options]
+mode bmc
+depth 60
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal -sv weft_regfile.v weft_timer.v weft_crc.v weft_core.v uart_tx_program.sv
+prep -top uart_tx_program
+
+[files]
+../src/weft_regfile.v
+../src/weft_timer.v
+../src/weft_crc.v
+../src/weft_core.v
+uart_tx_program.sv
+uart_tx_rom.vh

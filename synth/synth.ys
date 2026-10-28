@@ -1,0 +1,22 @@
+# Yosys synthesis of Weft against the IHP standard-cell liberty, for cell counts
+# and area estimates (LibreLane in the Tiny Tapeout action is the real flow).
+# Run from synth/: yowasp-yosys -s synth.ys   (or yosys)
+read_verilog ../src/weft_regfile.v
+read_verilog ../src/weft_pmem.v
+read_verilog ../src/weft_fifo.v
+read_verilog ../src/weft_timer.v
+read_verilog ../src/weft_crc.v
+read_verilog ../src/weft_sync.v
+read_verilog ../src/weft_host_spi.v
+read_verilog ../src/weft_core.v
+read_verilog ../src/tt_um_fuzzylogique_weft.v
+hierarchy -check -top tt_um_fuzzylogique_weft
+synth -top tt_um_fuzzylogique_weft
+dfflibmap -liberty pdk/sg13cmos5l_stdcell_typ_1p20V_25C.lib
+abc -liberty pdk/sg13cmos5l_stdcell_typ_1p20V_25C.lib
+opt_clean -purge
+tee -o out/stat_hier.txt stat -liberty pdk/sg13cmos5l_stdcell_typ_1p20V_25C.lib
+flatten
+opt_clean -purge
+tee -o out/stat_flat.txt stat -liberty pdk/sg13cmos5l_stdcell_typ_1p20V_25C.lib
+write_verilog -noattr out/weft_synth_cmos5l.v

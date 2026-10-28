@@ -1,0 +1,64 @@
+# Tiny Tapeout project information
+project:
+  title:        "Weft protocol engine"
+  author:       "Fayez Haque"
+  discord:      ""
+  description:  "Tiny 16-bit programmable protocol engine: one instruction per cycle plus a bit timer, edge waits, CRC and an SPI host port. UART, SPI and I2C are firmware."
+  language:     "Verilog"
+  clock_hz:     50000000
+
+  # How many tiles your design occupies? A single tile is about 167x108 uM.
+  tiles: "6x4"          # Jane Street protocol emulator competition: up to 6x4 on IHP CMOS5L
+
+  # Your top module name must start with "tt_um_". Make it unique by including your github username:
+  top_module:  "tt_um_fuzzylogique_weft"
+
+  # List your project's source files here.
+  # Source files must be in ./src and you must list each source file separately, one per line.
+  # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
+  source_files:
+    - "tt_um_fuzzylogique_weft.v"
+    - "weft_core.v"
+    - "weft_regfile.v"
+    - "weft_pmem.v"
+    - "weft_fifo.v"
+    - "weft_timer.v"
+    - "weft_crc.v"
+    - "weft_sync.v"
+    - "weft_host_spi.v"
+
+# The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
+# This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
+pinout:
+  # Inputs
+  ui[0]: "IN0 (UART RX in demo firmware)"
+  ui[1]: "IN1 (SPI MISO in demo firmware)"
+  ui[2]: "IN2"
+  ui[3]: "IN3"
+  ui[4]: "IN4"
+  ui[5]: "HOST_SCK"
+  ui[6]: "HOST_MOSI"
+  ui[7]: "HOST_CSn"
+
+  # Outputs
+  uo[0]: "OUT0 (UART TX in demo firmware)"
+  uo[1]: "OUT1 (SPI SCLK)"
+  uo[2]: "OUT2 (SPI MOSI)"
+  uo[3]: "OUT3 (SPI CSn)"
+  uo[4]: "OUT4 (LED)"
+  uo[5]: "OUT5"
+  uo[6]: "OUT6"
+  uo[7]: "HOST_MISO"
+
+  # Bidirectional pins
+  uio[0]: "IO8 (I2C SCL, open drain)"
+  uio[1]: "IO9 (I2C SDA, open drain)"
+  uio[2]: "IO10"
+  uio[3]: "IO11"
+  uio[4]: "IO12"
+  uio[5]: "IO13"
+  uio[6]: "IO14"
+  uio[7]: "IO15"
+
+# Do not change!
+yaml_version: 6

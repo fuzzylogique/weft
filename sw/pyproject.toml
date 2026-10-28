@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weft"
+version = "0.1.0"
+description = "Assembler, instruction-set simulator and verification helpers for the Weft protocol engine"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+
+[project.scripts]
+weft-asm = "weft.asm:main"
+weft-gen = "weft.gen:main"
+
+[tool.setuptools]
+packages = ["weft"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

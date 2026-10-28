@@ -1,0 +1,9 @@
+// Zed tasks: cmd-shift-p -> "task: spawn". All tools come from the jsasic conda env.
+[
+  { "label": "weft: sw tests (pytest)", "command": "make", "args": ["test-sw", "PY=/opt/anaconda3/envs/jsasic/bin/python"], "cwd": "$ZED_WORKTREE_ROOT", "tags": ["weft"] },
+  { "label": "weft: lint (verilator)", "command": "make", "args": ["lint", "VERILATOR=/opt/anaconda3/envs/jsasic/bin/verilator"], "cwd": "$ZED_WORKTREE_ROOT", "tags": ["weft"] },
+  { "label": "weft: cocotb sim (verilator)", "command": "/bin/zsh", "args": ["-lc", "export PATH=/opt/anaconda3/envs/jsasic/bin:$PATH && make sim"], "cwd": "$ZED_WORKTREE_ROOT", "tags": ["weft"] },
+  { "label": "weft: regenerate ISA (gen + asm)", "command": "make", "args": ["gen", "asm", "PY=/opt/anaconda3/envs/jsasic/bin/python"], "cwd": "$ZED_WORKTREE_ROOT", "tags": ["weft"] },
+  { "label": "weft: assemble current file", "command": "/opt/anaconda3/envs/jsasic/bin/python", "args": ["-m", "weft.asm", "$ZED_FILE", "--list"], "cwd": "$ZED_WORKTREE_ROOT", "tags": ["weft"] },
+  { "label": "weft: synth (yosys, IHP liberty)", "command": "/bin/zsh", "args": ["-lc", "export PATH=/opt/anaconda3/envs/jsasic/bin:$PATH && make synth"], "cwd": "$ZED_WORKTREE_ROOT", "tags": ["weft"] }
+]
