@@ -168,6 +168,20 @@ async def test_fifo_round_trip(dut):
 
 
 @cocotb.test()
+async def test_load_last_word(dut):
+    """A full-memory LOAD must write word 127 too (regression: the host byte counter used to wrap)."""
+    host = await start(dut)
+    halt = asm.assemble("HALT").words[0]
+    await host.load_full([0] * (DEPTH - 1) + [halt])
+    await host.reset()
+    await host.run()
+    await ClockCycles(dut.clk, DEPTH + 20)
+    st = await host.status()
+    assert st["halted"] == 1 and st["pc"] == 0, st  # halted at 127, PC wrapped to 0
+    assert await host.peek(isa.DBG["CYC"]) == DEPTH
+
+
+@cocotb.test()
 async def test_illegal_instruction_halts(dut):
     host = await start(dut)
     await host.load_full([asm.assemble("LDI r1, 1").words[0], 0xFE00, asm.assemble("LDI r1, 2").words[0]])

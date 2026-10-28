@@ -19,6 +19,7 @@ The cocotb host driver uses clk/10.
 ## Transactions
 
 A transaction is: CSn low, one command byte, zero or more data bytes, CSn high.
+Transactions can be any length; a LOAD of the whole 128-word memory is 258 bytes.
 While the command byte is clocked in, MISO returns status byte 0, so any
 transaction doubles as an "are you alive" check (bit 0 is always 1).
 

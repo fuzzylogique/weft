@@ -6,18 +6,18 @@ Budget: 6x4 tiles at 60% density = 549,700 µm² of standard cells. Planning rul
 
 | Module | What | Instances | Cells (each) | Area µm² (each) | Area µm² (all) | % of budget | Hand estimate µm² |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `weft_pmem` | Program memory 128 x 16, flops + read mux | 1 | 5,961 | 167,238 | 167,238 | 30.4% | 166,440 |
-| `weft_core` | Core: PC, decoder, ALU, flags, pin registers, cycle counter | 1 | 1,271 | 14,975 | 14,975 | 2.7% | 10,000 |
+| `weft_pmem` | Program memory 128 x 16, flops + read mux | 1 | 5,842 | 166,962 | 166,962 | 30.4% | 166,440 |
+| `weft_core` | Core: PC, decoder, ALU, flags, pin registers, cycle counter | 1 | 1,271 | 14,939 | 14,939 | 2.7% | 10,000 |
 | `weft_regfile` | Register file 8 x 16, 2 read ports | 1 | 635 | 12,254 | 12,254 | 2.2% | 11,759 |
 | `weft_fifo` | FIFO 4 x 16 (each) | 2 | 193 | 5,699 | 11,398 | 2.1% | 5,200 |
-| `weft_host_spi` | Host SPI port | 1 | 608 | 9,855 | 9,855 | 1.8% | 4,000 |
+| `weft_host_spi` | Host SPI port | 1 | 592 | 9,429 | 9,429 | 1.7% | 4,000 |
 | `weft_crc` | CRC/LFSR 16-bit, programmable | 1 | 268 | 3,680 | 3,680 | 0.7% | 2,540 |
 | `weft_timer` | Bit timer: period, counter, tick | 1 | 206 | 3,246 | 3,246 | 0.6% | 3,081 |
 | `weft_sync` | Synchronizers, 16 inputs x 3 flops | 1 | 96 | 2,787 | 2,787 | 0.5% | 2,352 |
 | `tt_um_fuzzylogique_weft` | Top-level glue | 1 | 2 | 15 | 15 | 0.0% | 0 |
-| **total** | flattened design | | | | **225,447** | **41.0%** | ~215,000 |
+| **total** | flattened design | | | | **224,709** | **40.9%** | ~215,000 |
 
-- Flip-flops: 2,608 (`dfrbpq_1`, 127,766 µm², 57% of the area). 2,048 of them are the program memory.
-- With the 1.3 planning factor: 293,082 µm² = 53% of the budget. The 75% ceiling is 412,275 µm².
-- Logic excluding program memory: 58,210 µm². Halving the memory to 64 words (`PMEM_AW = 6`) would save about 83,619 µm².
+- Flip-flops: 2,605 (`dfrbpq_1`, 127,619 µm², 57% of the area). 2,048 of them are the program memory.
+- With the 1.3 planning factor: 292,122 µm² = 53% of the budget. The 75% ceiling is 412,275 µm².
+- Logic excluding program memory: 57,747 µm². Halving the memory to 64 words (`PMEM_AW = 6`) would save about 83,481 µm².
 - Measured numbers from the Tiny Tapeout `gds` action (utilization, slack after place and route) go here once the first run completes.

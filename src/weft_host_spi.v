@@ -3,7 +3,8 @@
  * loads program memory, controls the core (reset / run / stop / single-step),
  * moves words through the two FIFOs and peeks at architectural state.
  * See docs/host-interface.md. Inputs must already be synchronized; SCK must be
- * at most clk/8.
+ * at most clk/8. Transactions may be any length (no byte counter: a LOAD of the
+ * whole memory is 258 bytes).
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -61,7 +62,10 @@ module weft_host_spi #(
   reg [2:0] bitcnt;
   reg [6:0] rx_sr;
   reg [7:0] tx_sr, cmd;
-  reg [7:0] bytecnt;
+  reg        have_cmd;   // the command byte of this transaction has arrived
+  reg        need_arg;   // LOAD: next byte is the address; PEEK: next byte is the selector
+  reg        phase;      // data bytes come in pairs: 0 = high byte next, 1 = low byte next
+  reg [1:0]  stat_idx;   // STATUS byte rotation
   reg [15:0] word;
   reg        pend_peek;
 
@@ -76,7 +80,7 @@ module weft_host_spi #(
   wire [7:0] status2 = {1'b0, ocount, 1'b0, icount};
   reg  [7:0] status_sel;
   always @(*) begin
-    case (bytecnt[1:0])
+    case (stat_idx)
       2'd1:    status_sel = status1;
       2'd2:    status_sel = status2;
       2'd3:    status_sel = VERSION;
@@ -91,7 +95,8 @@ module weft_host_spi #(
   always @(posedge clk) begin
     if (rst) begin
       sck_q <= 1'b0; csn_q <= 1'b1;
-      bitcnt <= 3'd0; rx_sr <= 7'd0; tx_sr <= 8'd0; cmd <= 8'd0; bytecnt <= 8'd0; word <= 16'd0;
+      bitcnt <= 3'd0; rx_sr <= 7'd0; tx_sr <= 8'd0; cmd <= 8'd0; word <= 16'd0;
+      have_cmd <= 1'b0; need_arg <= 1'b0; phase <= 1'b0; stat_idx <= 2'd0;
       pend_peek <= 1'b0;
       pmem_we <= 1'b0; pmem_wa <= {PMEM_AW{1'b0}}; pmem_wd <= 16'd0;
       core_rst <= 1'b0; core_run <= 1'b0; core_stop <= 1'b0; core_step <= 1'b0;
@@ -111,26 +116,32 @@ module weft_host_spi #(
       end
 
       if (csn) begin
-        bitcnt  <= 3'd0;
-        bytecnt <= 8'd0;
+        bitcnt   <= 3'd0;
+        have_cmd <= 1'b0;
       end
       if (csn_fall) begin
-        tx_sr   <= status0;
-        bitcnt  <= 3'd0;
-        bytecnt <= 8'd0;
+        tx_sr    <= status0;
+        bitcnt   <= 3'd0;
+        have_cmd <= 1'b0;
+        need_arg <= 1'b0;
+        phase    <= 1'b0;
+        stat_idx <= 2'd1;
       end else if (~csn & sck_rise) begin
         rx_sr  <= rxb[6:0];
         bitcnt <= bitcnt + 3'd1;
         if (bitcnt == 3'd7) begin
-          bytecnt <= bytecnt + 8'd1;
-          tx_sr   <= status0;
-          if (bytecnt == 8'd0) begin
-            cmd <= rxb;
+          tx_sr <= status0;
+          if (!have_cmd) begin
+            have_cmd <= 1'b1;
+            cmd      <= rxb;
+            phase    <= 1'b0;
             case (rxb)
               CMD_RESET: core_rst  <= 1'b1;
               CMD_RUN:   core_run  <= 1'b1;
               CMD_STOP:  core_stop <= 1'b1;
               CMD_STEP:  core_step <= 1'b1;
+              CMD_LOAD:  need_arg  <= 1'b1;
+              CMD_PEEK:  need_arg  <= 1'b1;
               CMD_PULL: begin
                 ofifo_re <= 1'b1;
                 word     <= ofifo_rd;
@@ -140,42 +151,55 @@ module weft_host_spi #(
             endcase
           end else begin
             case (cmd)
-              CMD_STATUS: tx_sr <= status_sel;
+              CMD_STATUS: begin
+                tx_sr    <= status_sel;
+                stat_idx <= stat_idx + 2'd1;
+              end
               CMD_LOAD: begin
-                if (bytecnt == 8'd1) begin
-                  pmem_wa <= rxb[PMEM_AW-1:0];
-                end else if (bytecnt[0] == 1'b0) begin
+                if (need_arg) begin
+                  pmem_wa  <= rxb[PMEM_AW-1:0];
+                  need_arg <= 1'b0;
+                end else if (!phase) begin
                   word[15:8] <= rxb;
+                  phase      <= 1'b1;
                 end else begin
                   pmem_we <= 1'b1;
                   pmem_wd <= {word[15:8], rxb};
+                  phase   <= 1'b0;
                 end
               end
               CMD_PUSH: begin
-                if (bytecnt[0] == 1'b1) begin
+                if (!phase) begin
                   word[15:8] <= rxb;
+                  phase      <= 1'b1;
                 end else begin
                   ififo_we <= 1'b1;
                   ififo_wd <= {word[15:8], rxb};
+                  phase    <= 1'b0;
                 end
               end
               CMD_PULL: begin
-                if (bytecnt[0] == 1'b1) begin
+                if (!phase) begin
                   tx_sr <= word[7:0];
+                  phase <= 1'b1;
                 end else begin
                   ofifo_re <= 1'b1;
                   word     <= ofifo_rd;
                   tx_sr    <= ofifo_rd[15:8];
+                  phase    <= 1'b0;
                 end
               end
               CMD_PEEK: begin
-                if (bytecnt == 8'd1) begin
+                if (need_arg) begin
                   dbg_sel   <= rxb[3:0];
                   pend_peek <= 1'b1;
-                end else if (bytecnt[0] == 1'b0) begin
+                  need_arg  <= 1'b0;
+                end else if (!phase) begin
                   tx_sr <= word[7:0];
+                  phase <= 1'b1;
                 end else begin
                   pend_peek <= 1'b1;
+                  phase     <= 1'b0;
                 end
               end
               default: ;
