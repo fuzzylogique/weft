@@ -2,8 +2,8 @@ name: formal
 # SymbiYosys proofs (formal/*.sby) with the OSS CAD Suite. One job per
 # (file, task) so a slow proof cannot hide the others, and every job has a
 # hard limit: the first run (2026-10-28) spent six hours in one smtbmc task
-# and was killed by GitHub. The "optional" task (the 62-cycle UART cover) may
-# time out without failing the workflow.
+# and was killed by GitHub. Every task is required; "optional: true" on a
+# matrix entry would let it time out without failing the workflow.
 on: [push, workflow_dispatch]
 concurrency:
   group: formal-${{ github.ref }}
@@ -26,7 +26,7 @@ jobs:
           - { job: weft_fifo, task: prove }
           - { job: weft_fifo, task: cover }
           - { job: uart_tx_program, task: bmc }
-          - { job: uart_tx_program, task: cover, optional: true }
+          - { job: uart_tx_program, task: cover }
     steps:
       - uses: actions/checkout@v6
       - uses: YosysHQ/setup-oss-cad-suite@v3

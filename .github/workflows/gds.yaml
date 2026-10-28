@@ -2,6 +2,19 @@ name: gds
 
 on:
   push:
+    # A full LibreLane run takes 3.5 hours; skip it for pushes that cannot change
+    # the chip (docs, proofs, synthesis estimates, the other workflows). Before a
+    # Tiny Tapeout submission, run it by hand (workflow_dispatch) on the final
+    # commit if that commit was docs-only.
+    paths-ignore:
+      - 'docs/**'
+      - 'formal/**'
+      - 'synth/**'
+      - '**.md'
+      - '.github/workflows/formal.yaml'
+      - '.github/workflows/sw.yaml'
+      - '.github/workflows/docs.yaml'
+      - '.github/workflows/test.yaml'
   workflow_dispatch:
 
 jobs:

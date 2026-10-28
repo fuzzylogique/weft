@@ -40,7 +40,21 @@ First per-task run, 2026-10-28 (workflow run 40772451647, RTL identical to the f
 | `uart_tx_program bmc` | ERROR: the harness indexed the data byte with a 4-bit index, which leaves constant x bits that the AIGER model refuses; fixed (3-bit index), rerun pending |
 | `uart_tx_program cover` | "PASS" at step 1, which was vacuous: the covers were not gated behind the reset and the arbitrary pre-reset state satisfied them. All harness covers are now gated like the asserts; this one needs the whole 62-cycle frame and is optional in CI |
 
-Local check of the fixes with `yowasp-sby` and z3: timer `prove` passes by k-induction, every task's AIGER model builds, the UART 60-cycle bound passes in 20 minutes on the bit-blasted model (the array model ran past six hours in CI).
+Second run after the harness fixes, on the timing-restructured RTL (commit 5698fbd, workflow run 40776365356): **all nine tasks pass**.
+
+| Task | Result |
+| --- | --- |
+| `weft_core prove` | PASS, unbounded (abc pdr, under a second) |
+| `weft_core bmc` | PASS, 12 cycles (abc bmc3 first, under a second) |
+| `weft_core cover` | PASS, all four covers |
+| `weft_timer prove` | PASS, unbounded: abc pdr and k-induction (smtbmc yices) both close it |
+| `weft_timer cover` | PASS: the tick is reached at step 6, PERIOD+1 cycles after TSET |
+| `weft_fifo prove` | PASS, unbounded (abc pdr, 3 s) |
+| `weft_fifo cover` | PASS at step 3 |
+| `uart_tx_program bmc` | PASS, 60 cycles, every byte value (abc bmc3, 13 s; the array model had run past six hours) |
+| `uart_tx_program cover` | PASS: a complete frame is reached at step 53, so the 60-cycle bound covers the whole transmission; the 0xA5 frame is reached too (23 s) |
+
+Local check of the fixes beforehand with `yowasp-sby` and z3: timer `prove` by k-induction, every task's AIGER model builds, UART 60-cycle bound in 20 minutes on the bit-blasted model.
 
 Regenerate the program ROM after changing `uart_tx.asm`:
 
