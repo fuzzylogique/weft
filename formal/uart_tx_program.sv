@@ -47,7 +47,8 @@ module uart_tx_program (
   reg  tx_q, seen_high, active, done;
   reg  [3:0] bit_idx;
   reg  [7:0] cnt;
-  wire expected = (bit_idx == 4'd0) ? 1'b0 : (bit_idx <= 4'd8) ? data[bit_idx - 1] : 1'b1;
+  wire [2:0] data_idx = bit_idx[2:0] - 3'd1;  // bit_idx 1..8 -> data[0..7]; 3 bits wide so the select is never out of range (no x bits for the AIGER model)
+  wire expected = (bit_idx == 4'd0) ? 1'b0 : (bit_idx <= 4'd8) ? data[data_idx] : 1'b1;
   always @(posedge clk) begin
     if (rst) begin
       tx_q <= 1'b1; seen_high <= 1'b0; active <= 1'b0; done <= 1'b0; bit_idx <= 4'd0; cnt <= 8'd0;
@@ -72,6 +73,8 @@ module uart_tx_program (
     if (done) assert(tx);                 // line idles high afterwards (PULL waits forever)
     assert(!ill);
   end
-  always @(posedge clk) cover(done);
-  always @(posedge clk) cover(done && data == 8'hA5);
+  // Gated like the asserts so the arbitrary pre-reset state cannot satisfy them;
+  // reaching these takes the whole frame, about 62 cycles.
+  always @(posedge clk) if (!init && !rst) cover(done);
+  always @(posedge clk) if (!init && !rst) cover(done && data == 8'hA5);
 endmodule

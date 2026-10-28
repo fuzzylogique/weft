@@ -4,7 +4,7 @@
 #          smtbmc race; the first conclusive answer wins)
 #   cover  the WAITT-completion, taken-branch, pin-write and illegal-halt
 #          covers in weft_core.v are reachable (the bound is not vacuous)
-#   prove  unbounded attempt with IC3/PDR; CI tolerates a timeout here
+#   prove  unbounded, by IC3/PDR (first CI run: proved in one second)
 # Run one task: sby -f weft_core.sby bmc
 [tasks]
 bmc

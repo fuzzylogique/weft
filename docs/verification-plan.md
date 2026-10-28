@@ -12,12 +12,12 @@ what has not.
 | ENC-03 | Verilog decode constants, `docs/isa.md` and program `.hex` files match `isa.py` | `weft.gen --check` in CI | `.github/workflows/sw.yaml` | passing |
 | ISA-01 | ADD/SUB/ADDI/CMPI set Z and C as specified | directed ISS | `sw/tests/test_iss.py` | passing |
 | ISA-02 | SHLC/SHRC shift through C; LDI/LDIH/ANDI/ORI byte semantics | directed ISS | `test_iss.py` | passing |
-| ISA-03 | DJNZ writes no flags; branches on Z/C/AL; CALL/RET via LR | directed ISS; formal (`weft_core.sby`) | `test_iss.py`, `formal/` | passing; core BMC (8 cycles, every instruction stream) passes locally |
+| ISA-03 | DJNZ writes no flags; branches on Z/C/AL; CALL/RET via LR | directed ISS; formal (`weft_core.sby`) | `test_iss.py`, `formal/` | passing; core invariants **proven unbounded** in CI (SymbiYosys, abc pdr), 12-cycle bound and covers also pass |
 | ISA-04 | DELAY n occupies exactly n+1 cycles | directed ISS; RTL single-step | `test_iss.py`, `test/test.py::test_single_step` | passing |
-| ISA-05 | After TSET P, WAITT completions are exactly P cycles apart; first tick P+1 after TSET; ticks do not queue | directed ISS; formal proof (`weft_timer.sby`) | `test_iss.py`, `formal/` | ISS passing; timer BMC to depth 12 passes, induction pending |
+| ISA-05 | After TSET P, WAITT completions are exactly P cycles apart; first tick P+1 after TSET; ticks do not queue | directed ISS; formal proof (`weft_timer.sby`) | `test_iss.py`, `formal/` | ISS passing; timer BMC to depth 12 passes; the unbounded proof closes by k-induction locally after a harness fix (the cycle counter saturated), CI rerun pending |
 | ISA-06 | WAITP/WAITR/WAITF see inputs two cycles late and complete in the cycle the condition is observed | directed ISS | `test_iss.py` | passing |
 | ISA-07 | OUT/OE/OUTC/OENC touch exactly one pin; OE on pins 0-7 has no effect | directed ISS; formal (pins change only when fired) | `test_iss.py`, `formal/` | ISS passing; covered by the core BMC |
-| ISA-08 | PUSH stalls on full, PULL stalls on empty; FIFO order preserved | directed ISS; RTL round trip; formal (`weft_fifo.sby`) | `test_iss.py`, `test/test.py::test_fifo_round_trip` | passing; FIFO BMC to depth 10 passes, induction inconclusive |
+| ISA-08 | PUSH stalls on full, PULL stalls on empty; FIFO order preserved | directed ISS; RTL round trip; formal (`weft_fifo.sby`) | `test_iss.py`, `test/test.py::test_fifo_round_trip` | passing; FIFO flags, count and ordering **proven unbounded** in CI (abc pdr) |
 | ISA-09 | CRCIN/CRCINR compute CRC-16/CCITT and reflected CRC-16 correctly | directed ISS with known vectors; selftest on RTL | `test_iss.py`, `selftest.asm` | passing |
 | ISA-10 | Illegal encodings halt with ILL set and PC on the word | directed ISS; RTL | `test_iss.py`, `test/test.py::test_illegal_instruction_halts` | passing |
 | ISA-11 | HALT stops; RUN resumes after it | ISS; RTL | `test_iss.py`, `test/test.py` | passing |

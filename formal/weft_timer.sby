@@ -1,5 +1,7 @@
 # SymbiYosys: the bit timer ticks exactly every PERIOD cycles after TSET.
-#   prove  unbounded, by IC3/PDR (k-induction alone was inconclusive at depth 12)
+#   prove  unbounded; abc pdr and k-induction (smtbmc) race, first answer wins.
+#          With the harness counting phase and elapsed cycles in bounded
+#          registers, k-induction closes in about a second.
 #   cover  a tick PERIOD+1 cycles after TSET is reachable
 [tasks]
 prove
@@ -13,6 +15,7 @@ timeout 1200
 
 [engines]
 prove: abc pdr
+prove: smtbmc yices
 cover: smtbmc yices
 
 [script]

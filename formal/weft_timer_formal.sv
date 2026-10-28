@@ -1,6 +1,10 @@
 // Proves: after TSET with period PERIOD (and no further TSET/TSTOP/consume),
 // the count output walks PERIOD-1 .. 0 and the tick flag rises exactly PERIOD
 // cycles after TSET and stays set (ticks are level flags; WAITT consumes them).
+// The harness keeps the phase modulo PERIOD and an elapsed count that saturates
+// at PERIOD+1, so every property is a finite inductive invariant (an earlier
+// version counted cycles in a saturating 16-bit register, which made the
+// relation false after 65535 cycles and left k-induction and PDR inconclusive).
 `default_nettype none
 module weft_timer_formal #(
     parameter PERIOD = 3
@@ -24,16 +28,20 @@ module weft_timer_formal #(
 
   // Scenario: exactly one TSET, then hands off.
   reg armed;
-  reg [15:0] since;  // cycles since TSET fired (1 in the cycle after it), saturating
+  reg [15:0] phase;    // (cycles since TSET - 1) mod PERIOD: 0 in the cycle after TSET
+  reg [15:0] elapsed;  // cycles since TSET, saturating at PERIOD+1 (the tick cycle)
   always @(posedge clk) begin
     if (rst) begin
-      armed <= 1'b0;
-      since <= 16'd0;
+      armed   <= 1'b0;
+      phase   <= 16'd0;
+      elapsed <= 16'd0;
     end else if (tset) begin
-      armed <= 1'b1;
-      since <= 16'd1;  // the cycle after TSET is "since 1": cnt reads PERIOD-1 there
-    end else if (armed && since != 16'hFFFF) begin
-      since <= since + 16'd1;
+      armed   <= 1'b1;
+      phase   <= 16'd0;
+      elapsed <= 16'd1;
+    end else if (armed) begin
+      phase   <= (phase == PERIOD - 1) ? 16'd0 : phase + 16'd1;
+      if (elapsed != PERIOD + 1) elapsed <= elapsed + 16'd1;
     end
   end
   always @(*) begin
@@ -44,11 +52,12 @@ module weft_timer_formal #(
 
   always @(posedge clk) if (!init && !rst && armed) begin
     assert(run);
-    assert(period == PERIOD[15:0]);  // strengthening invariant for k-induction
+    assert(period == PERIOD[15:0]);
+    assert(phase < PERIOD);
     // Count output is PERIOD-1 one cycle after TSET and wraps every PERIOD cycles.
-    assert(cnt == (PERIOD - 1) - ((since - 1) % PERIOD));
+    assert(cnt == (PERIOD - 1) - phase);
     // The tick appears exactly PERIOD+1 cycles after TSET fired and stays.
-    assert(tick == (since >= PERIOD + 1));
+    assert(tick == (elapsed == PERIOD + 1));
   end
-  always @(posedge clk) cover(armed && tick && since == PERIOD + 1);
+  always @(posedge clk) if (!init && !rst) cover(armed && tick && elapsed == PERIOD + 1);
 endmodule

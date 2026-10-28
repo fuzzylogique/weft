@@ -49,5 +49,5 @@ module weft_fifo_formal (
     end
   end
   always @(posedge clk) if (!init && !rst && tag_in && ahead == 3'd0 && !empty) assert(rd == tag);
-  always @(posedge clk) cover(tag_in && ahead == 3'd0 && re && !empty);
+  always @(posedge clk) if (!init && !rst) cover(tag_in && ahead == 3'd0 && re && !empty);  // gated: the pre-reset state must not satisfy it
 endmodule

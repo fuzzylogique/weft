@@ -2,8 +2,8 @@ name: formal
 # SymbiYosys proofs (formal/*.sby) with the OSS CAD Suite. One job per
 # (file, task) so a slow proof cannot hide the others, and every job has a
 # hard limit: the first run (2026-10-28) spent six hours in one smtbmc task
-# and was killed by GitHub. "optional" tasks (unbounded core proof, 62-cycle
-# UART cover) may time out without failing the workflow.
+# and was killed by GitHub. The "optional" task (the 62-cycle UART cover) may
+# time out without failing the workflow.
 on: [push, workflow_dispatch]
 concurrency:
   group: formal-${{ github.ref }}
@@ -20,7 +20,7 @@ jobs:
         include:
           - { job: weft_core, task: bmc }
           - { job: weft_core, task: cover }
-          - { job: weft_core, task: prove, optional: true }
+          - { job: weft_core, task: prove }
           - { job: weft_timer, task: prove }
           - { job: weft_timer, task: cover }
           - { job: weft_fifo, task: prove }

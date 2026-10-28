@@ -21,10 +21,26 @@ CAD Suite.
 | --- | --- |
 | `weft_core` | 8-cycle BMC passes for every instruction stream (188K variables) |
 | `uart_tx_program` | 62-cycle BMC passes at BIT=4 (1.56M variables): every byte, every bit exactly 4 cycles. At BIT=3 the proof produced a counterexample: the per-bit loop is 3 instructions plus WAITT, so 3 is below the program's minimum period. The proof found the firmware's real timing limit. |
-| `weft_timer` | BMC passes to depth 12 (every reachable trace of 12 cycles satisfies the period and tick properties); k-induction is still inconclusive at depth 12 even with the period register asserted, so the unbounded claim is open |
-| `weft_fifo` | BMC passes to depth 10; k-induction inconclusive without invariants tying the tag position to the pointers |
+| `weft_timer` | BMC passes to depth 12. k-induction and PDR were inconclusive because of a harness bug, not the design: the cycle counter saturated at 0xFFFF while the timer kept counting, so the asserted relation was false after 65535 cycles. With a modulo-PERIOD phase and an elapsed count that saturates at PERIOD+1, k-induction closes in one second (local sby with z3) |
+| `weft_fifo` | BMC passes to depth 10; plain k-induction fails (no invariant ties the tag position to the pointers), PDR proves it unbounded in CI (below) |
 
-Local `yowasp-sby` runs with z3 (2026-10-28): the timer and FIFO `cover` tasks pass; their `prove` tasks pass the base case and fail plain k-induction at depth 20, which is why CI uses `abc pdr` for them. The `abc` engines could not be run locally; the CI run is the first execution of those tasks.
+## CI results (SymbiYosys, OSS CAD Suite 2026-10-01)
+
+First per-task run, 2026-10-28 (workflow run 40772451647, RTL identical to the first GDS run):
+
+| Task | Result |
+| --- | --- |
+| `weft_core prove` | **PASS, unbounded** (abc pdr, 1 s): for every instruction stream the core invariants hold in every reachable state |
+| `weft_core bmc` | PASS, 12 cycles (smtbmc yices, 1 s; abc bmc3 was still starting) |
+| `weft_core cover` | PASS |
+| `weft_fifo prove` | **PASS, unbounded** (abc pdr, 4 s) |
+| `weft_fifo cover` | PASS |
+| `weft_timer cover` | PASS |
+| `weft_timer prove` | TIMEOUT after 20 min: the harness bug above; fixed, rerun pending |
+| `uart_tx_program bmc` | ERROR: the harness indexed the data byte with a 4-bit index, which leaves constant x bits that the AIGER model refuses; fixed (3-bit index), rerun pending |
+| `uart_tx_program cover` | "PASS" at step 1, which was vacuous: the covers were not gated behind the reset and the arbitrary pre-reset state satisfied them. All harness covers are now gated like the asserts; this one needs the whole 62-cycle frame and is optional in CI |
+
+Local check of the fixes with `yowasp-sby` and z3: timer `prove` passes by k-induction, every task's AIGER model builds, the UART 60-cycle bound passes in 20 minutes on the bit-blasted model (the array model ran past six hours in CI).
 
 Regenerate the program ROM after changing `uart_tx.asm`:
 
