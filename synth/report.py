@@ -14,7 +14,7 @@ PLANNING_FACTOR = 1.3
 HAND = {
     "weft_pmem": ("Program memory 128 x 16, flops + read mux", 166_440),
     "weft_core": ("Core: PC, decoder, ALU, flags, pin registers, cycle counter", 10_000),
-    "weft_regfile": ("Register file 8 x 16, 2 read ports", 11_759),
+    "weft_regfile": ("Register file 8 x 16, 3 read ports", 11_759),
     "weft_host_spi": ("Host SPI port", 4_000),
     "weft_fifo": ("FIFO 4 x 16 (each)", 5_200),
     "weft_crc": ("CRC/LFSR 16-bit, programmable", 2_540),

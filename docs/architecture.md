@@ -27,11 +27,18 @@ instructions.
 
 ## Execution model
 
-- **Single cycle.** Fetch (`pmem[pc]`), decode, execute and write-back happen
-  in one 20 ns cycle. There is no pipeline, so there are no hazards and no
-  branch penalty. The critical path is the 128:1 program-memory read mux, the
-  decoder, the 16-bit adder and the write-back mux: about 13 ns at the slow
-  corner by the gate delays in the research doc, comfortably inside 20 ns.
+- **Single cycle.** Decode, execute and write-back happen in one 20 ns cycle;
+  there is no pipeline, so there are no hazards and no branch penalty. The
+  instruction register is loaded from the program memory's registered read
+  port, addressed by the *next* PC, at the same edge that updates the PC, so it
+  always holds `pmem[pc]` and the 128:1 read mux sits on the PC-update path
+  instead of in series with the decoder, the register file and the ALU. The
+  register file reads the rd, rs and rt fields on three ports with no decode in
+  front of the read mux, and DJNZ decides its branch on the undecremented value.
+  Before these three changes the first GDS run measured the single-cycle chain
+  (38 cells: PC, read mux, decode, register read, adder, write-back mux) at
+  22.7 ns in the slow corner, 1.08 V and 125 °C, against a 20 ns budget; the
+  chain is now 29 cells in the same synthesis (ADR-005).
 - **Determinism contract.** Every instruction takes exactly one cycle except
   WAIT-class instructions (`WAITP`, `WAITR`, `WAITF`, `WAITT`, `PUSH`, `PULL`),
   which hold until their condition is true and complete in the first cycle it

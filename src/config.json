@@ -17,7 +17,13 @@
 
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
-  "CLOCK_PERIOD": 20,
+  "//": "Weft runs at 50 MHz (info.yaml clock_hz, signoff.sdc). Synthesis, placement and routing",
+  "//": "are constrained at 13 ns on purpose: the first GDS run met 20 ns at the nominal corner",
+  "//": "with 5.8 ns to spare and missed it by 2.7 ns at the slow corner (1.08 V, 125 C), and the",
+  "//": "slow/nominal delay ratio is about 1.6, so a 13 ns nominal target leaves margin at 20 ns",
+  "//": "slow. Signoff STA measures against the real 20 ns clock. See docs/log/2026-10-28.md.",
+  "CLOCK_PERIOD": 13,
+  "SIGNOFF_SDC_FILE": "dir::signoff.sdc",
 
   "//": "Hold slack margin - Increase them in case you are getting hold violations.",
   "PL_RESIZER_HOLD_SLACK_MARGIN": 0.1,

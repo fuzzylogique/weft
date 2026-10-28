@@ -57,7 +57,9 @@ Core control:
 - **LOAD** writes 16-bit words starting at the given address, incrementing after
   each word. Program memory is not reset, so a loader should write every word
   the program can reach; the reference loader zero-fills the whole memory
-  (0x0000 is NOP).
+  (0x0000 is NOP). Load while the core is stopped or in reset: the core holds
+  the instruction it executes next in a register fetched one edge earlier, so a
+  LOAD into that word while running takes effect one cycle late.
 - **PEEK** selectors: 0-7 = r0..r7 (valid only while stopped), 8 = PC,
   9 = FLAGS (`[0]` Z, `[1]` C, `[2]` tick pending, `[3]` running, `[4]` halted,
   `[5]` illegal, `[6]` timer running), 10 = cycle counter, 11 = timer count,

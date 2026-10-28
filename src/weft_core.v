@@ -1,10 +1,16 @@
 /*
  * Weft protocol engine: the core.
  *
- * One instruction per clock, no pipeline. Fetch (pmem[pc]), decode, execute
- * and write back all happen inside one cycle; see docs/isa.md for the cycle
- * contract. WAIT-class instructions hold the PC (stall) until their condition
- * is true; DELAY stalls imm12 extra cycles. Nothing else ever stalls.
+ * One instruction per clock, no pipeline. Decode, execute and write back all
+ * happen inside one cycle; see docs/isa.md for the cycle contract. WAIT-class
+ * instructions hold the PC (stall) until their condition is true; DELAY stalls
+ * imm12 extra cycles. Nothing else ever stalls.
+ *
+ * Fetch: the program memory has a registered read port addressed by pc_next,
+ * the value the PC takes at the coming edge, so `instr` is always pmem[pc] and
+ * the 128:1 read mux sits on the PC-update path instead of in series with the
+ * decoder, the register file and the ALU (the first GDS run put that 38-cell
+ * chain 2.7 ns over budget at the slow corner).
  *
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2026 Fayez Haque
@@ -19,8 +25,9 @@ module weft_core #(
     input  wire               host_run,  // one-cycle pulses from the host port
     input  wire               host_stop,
     input  wire               host_step,
-    input  wire [15:0]        instr,     // pmem[pc]
+    input  wire [15:0]        instr,     // pmem[pc], from the registered read port
     output wire [PMEM_AW-1:0] pc_out,
+    output wire [PMEM_AW-1:0] pc_next,   // PC after this edge: read address for pmem
     input  wire [15:0]        pin_in,    // synchronized input pins {uio_in, ui_in}
     input  wire [15:0]        pin_prev,  // pin_in one cycle earlier (edge detection)
     output reg  [15:0]        pout,      // output pin registers {uio_out, uo_out}
@@ -172,11 +179,15 @@ module weft_core #(
   reg  stall;
   wire fire = en & ~stall;
 
-  // Register file: port A is rs for ALU/OUT/TIMER/FIFO/CRC, rd otherwise; the
-  // host borrows it for PEEK while the core is stopped.
+  // Register file: the rd, rs and rt fields are read in parallel on three ports
+  // whose addresses come straight from instruction bits, and the first operand
+  // is chosen after the read (rs for ALU/OUT/TIMER/FIFO/CRC, rd otherwise). An
+  // opcode decode in front of the read mux was on the critical path. The host
+  // borrows the rd port for PEEK while the core is stopped.
   wire use_rs = (op == OP_ALU) | (op == OP_OUT) | (op == OP_TIMER) | (op == OP_FIFO) | (op == OP_CRC);
-  wire [2:0]  rf_ra = en ? (use_rs ? f_rs : f_rd) : dbg_sel[2:0];
-  wire [15:0] a, b;
+  wire [2:0]  rf_ra = en ? f_rd : dbg_sel[2:0];
+  wire [15:0] dd, ds, b;
+  wire [15:0] a = use_rs ? ds : dd;
   reg         rf_we_i;
   reg  [2:0]  rf_wa;
   reg  [15:0] rf_wd;
@@ -184,7 +195,7 @@ module weft_core #(
 
   weft_regfile u_rf (
       .clk(clk), .rst(rst), .we(rf_we_i & fire), .wa(rf_wa), .wd(rf_wd),
-      .ra(rf_ra), .rb(f_rt), .da(a), .db(b)
+      .ra(rf_ra), .rs(f_rs), .rb(f_rt), .da(dd), .ds(ds), .db(b)
   );
 
   // Architectural state besides the register file.
@@ -349,7 +360,7 @@ module weft_core #(
         OP_DJNZ: begin
           rf_we_i = 1'b1;
           rf_wd   = a - 16'd1;
-          if (rf_wd != 16'd0) begin
+          if (a != 16'd1) begin  // same as rf_wd != 0, without waiting for the decrement
             pc_n   = f_target;
             branch = 1'b1;
           end
@@ -440,6 +451,11 @@ module weft_core #(
   assign ofifo_wd = a;
   assign ififo_re = pull & fire;
 
+  // The PC takes pc_next at every edge (the commit block below spells the same
+  // thing out case by case); the program memory reads from it so that the
+  // instruction register holds pmem[pc] in the next cycle.
+  assign pc_next = rst ? {PMEM_AW{1'b0}} : (fire ? pc_n : pc);
+
   // ------------------------------------------------------------ commit
   always @(posedge clk) begin
     if (rst) begin
@@ -493,7 +509,7 @@ module weft_core #(
       DBG_POUT:  dbg_word = pout;
       DBG_POE:   dbg_word = {8'd0, poe};
       DBG_LR:    dbg_word = lr_ext;
-      default:   dbg_word = a;  // DBG_R0..R7 via the register file's port A
+      default:   dbg_word = dd;  // DBG_R0..R7 via the register file's rd port
     endcase
   end
 

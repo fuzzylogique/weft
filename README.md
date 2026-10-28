@@ -47,9 +47,9 @@ runs: 0*1 1*439 0*434 1*434 0*434 1*434 0*434 1*434 0*434 1*434 0*434 1*428     
 | RTL (Verilog-2005, 9 modules) | done, Verilator `-Wall` clean |
 | Python tests | 53 passing (Hypothesis round trips, ISS semantics, firmware + snapshots) |
 | cocotb RTL tests (host port, lockstep vs ISS on all firmware and 12 random programs, final state via PEEK) | 13 of 13 passing under Verilator locally, under Icarus in CI, and on the gate-level netlist |
-| Yosys area against the IHP CMOS5L liberty | 224,709 µm² = 41% of the 6x4 budget at 60% density; 2,605 flops. LibreLane placed it at 27% utilization before hold fixing |
+| Yosys area against the IHP CMOS5L liberty | 227,964 µm² = 41.5% of the 6x4 budget at 60% density; 2,621 flops. LibreLane's final utilization was 34.4% of the 6x4 core area |
 | Formal (core, timer, FIFO, UART program) | run locally with Yosys's SAT engine: core 8-cycle BMC passes for every instruction stream; the UART program proof passes (every byte, every bit exactly BIT cycles, 62-cycle bound); timer and FIFO pass bounded checks, induction pending. The first SymbiYosys CI run hit GitHub's 6-hour limit in one smtbmc task; the workflow now runs one bounded job per proof. `formal/README.md` |
-| Tiny Tapeout `gds` action (LibreLane, DRC/LVS, gate-level test) | builds; DRC, LVS and antenna clean; precheck passed; gate-level suite 13 of 13. Setup is clean at the nominal corner, with violations reported in the slow corner (1.08 V, 125 °C) that still need their slack read from the run artifact. `docs/log/2026-10-28.md` |
+| Tiny Tapeout `gds` action (LibreLane, DRC/LVS, gate-level test) | builds; DRC, LVS and antenna clean; precheck passed; gate-level suite 13 of 13. Setup had +5.76 ns of margin at the nominal corner but was −2.68 ns short in the slow corner (1.08 V, 125 °C): 44 MHz there instead of 50. The critical path was shortened from 38 to 29 cells (ADR-005) and implementation now targets 13 ns; the rerun is pending. `docs/log/2026-10-28.md` |
 | FPGA build | not attempted |
 
 ## Repository layout
@@ -87,7 +87,8 @@ python -c "from weft.bench import *; r = run_iss(load_program('blink').words, cy
 
 ## Architecture in one paragraph
 
-Fetch, decode, execute and write back happen in one 20 ns cycle: 8 x 16-bit
+Decode, execute and write back happen in one 20 ns cycle, with the instruction
+word fetched into a register one edge earlier from the next PC: 8 x 16-bit
 registers, Z/C flags, a link register, 128 x 16 flop program memory, a 16-bit
 bit timer (`TSET`/`WAITT`), rising/falling edge waits, a free-running cycle
 counter, a 16-bit CRC/LFSR with programmable polynomial, 16 output pins (8 of

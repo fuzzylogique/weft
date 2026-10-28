@@ -25,7 +25,9 @@ zero-fills instead); the host writes it over SPI.
 Consequences: The whole design is budgeted around 215K µm² after the 1.3
 planning factor, about 40% of the 549,700 µm² budget at 60% density, leaving
 room for the real flow to come in larger. The largest demo program (I2C) uses
-66 words. A 128:1 read mux is on the fetch path: about 1.7 ns, acceptable.
+66 words. The 128:1 read mux was first placed combinationally on the fetch path
+(estimated at 1.7 ns); after the first GDS run it moved behind a registered
+read port addressed by the next PC (ADR-005), which keeps the cycle contract.
 
 Revisit if: the first GDS run reports utilization above 75% (drop to 64 words)
 or the organizers confirm SRAM macros work on CMOS5L and a program needs more

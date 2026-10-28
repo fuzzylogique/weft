@@ -14,6 +14,10 @@ Timing conventions (see :func:`weft.isa.cycle_contract`):
 * After ``step`` returns, ``pout``/``poe`` hold the pin registers as they are
   during the *next* cycle (registered at the clock edge that ends this one).
 * An instruction executing in cycle N sees inputs from the start of cycle N-2.
+* The RTL holds the instruction word in a register loaded from the next PC;
+  the ISS reads ``pmem[pc]`` when it steps.  The two agree exactly unless the
+  host writes program memory while the core is running, in which case the RTL
+  sees a write to the word being fetched one cycle later than the ISS does.
 """
 
 from __future__ import annotations

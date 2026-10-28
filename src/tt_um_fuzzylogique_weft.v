@@ -42,7 +42,7 @@ module tt_um_fuzzylogique_weft (
   wire                ififo_we, ofifo_re;
   wire [15:0]         ififo_wd, ofifo_rd;
   wire                running, halted, ill, tick;
-  wire [PMEM_AW-1:0]  pc;
+  wire [PMEM_AW-1:0]  pc, pc_next;
   wire [2:0]          icount, ocount;
   wire                ififo_empty, ififo_full, ofifo_empty, ofifo_full;
   wire [3:0]          dbg_sel;
@@ -65,7 +65,7 @@ module tt_um_fuzzylogique_weft (
   // Program memory.
   wire [15:0] instr;
   weft_pmem #(.AW(PMEM_AW)) u_pmem (
-      .clk(clk), .we(pmem_we), .wa(pmem_wa), .wd(pmem_wd), .ra(pc), .rd(instr)
+      .clk(clk), .we(pmem_we), .wa(pmem_wa), .wd(pmem_wd), .ra(pc_next), .rd(instr)
   );
 
   // FIFOs: host -> core (IN) and core -> host (OUT).
@@ -86,7 +86,7 @@ module tt_um_fuzzylogique_weft (
   weft_core #(.PMEM_AW(PMEM_AW)) u_core (
       .clk(clk), .rst(core_rst),
       .host_run(core_run), .host_stop(core_stop), .host_step(core_step),
-      .instr(instr), .pc_out(pc),
+      .instr(instr), .pc_out(pc), .pc_next(pc_next),
       .pin_in(pin_s), .pin_prev(pin_prev), .pout(pout), .poe(poe),
       .ofifo_we(ofifo_we), .ofifo_wd(ofifo_wd), .ofifo_full(ofifo_full),
       .ififo_re(ififo_re), .ififo_rd(ififo_rd), .ififo_empty(ififo_empty),
