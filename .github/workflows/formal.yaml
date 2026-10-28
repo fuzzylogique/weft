@@ -1,25 +1,55 @@
 name: formal
-# SymbiYosys proofs (formal/*.sby) using the OSS CAD Suite.
+# SymbiYosys proofs (formal/*.sby) with the OSS CAD Suite. One job per
+# (file, task) so a slow proof cannot hide the others, and every job has a
+# hard limit: the first run (2026-10-28) spent six hours in one smtbmc task
+# and was killed by GitHub. "optional" tasks (unbounded core proof, 62-cycle
+# UART cover) may time out without failing the workflow.
 on: [push, workflow_dispatch]
+concurrency:
+  group: formal-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  formal:
+  sby:
+    name: ${{ matrix.job }} ${{ matrix.task }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    continue-on-error: ${{ matrix.optional || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { job: weft_core, task: bmc }
+          - { job: weft_core, task: cover }
+          - { job: weft_core, task: prove, optional: true }
+          - { job: weft_timer, task: prove }
+          - { job: weft_timer, task: cover }
+          - { job: weft_fifo, task: prove }
+          - { job: weft_fifo, task: cover }
+          - { job: uart_tx_program, task: bmc }
+          - { job: uart_tx_program, task: cover, optional: true }
     steps:
       - uses: actions/checkout@v6
       - uses: YosysHQ/setup-oss-cad-suite@v3
         with:
           version: '2026-10-01'
-      - name: Run every .sby
+      - name: sby ${{ matrix.job }} ${{ matrix.task }}
         run: |
           cd formal
-          status=0
-          for f in *.sby; do
-            echo "=== $f"
-            sby -f "$f" || status=1
-          done
-          exit $status
+          sby -f ${{ matrix.job }}.sby ${{ matrix.task }}
+      - name: Result
+        if: always()
+        run: |
+          cd formal
+          echo "## ${{ matrix.job }} ${{ matrix.task }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E "summary|DONE" ${{ matrix.job }}_${{ matrix.task }}/logfile.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: formal-results
-          path: formal/*/logfile.txt
+          name: formal-${{ matrix.job }}-${{ matrix.task }}
+          path: |
+            formal/${{ matrix.job }}_${{ matrix.task }}/logfile.txt
+            formal/${{ matrix.job }}_${{ matrix.task }}/status
+            formal/${{ matrix.job }}_${{ matrix.task }}/engine_*/trace*.vcd
+          if-no-files-found: ignore

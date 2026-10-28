@@ -1,14 +1,24 @@
 # SymbiYosys: FIFO flags and counts are consistent; data comes out in order.
+#   prove  unbounded, by IC3/PDR (k-induction alone was inconclusive at depth 8)
+#   cover  a tagged word is read from the head of the queue
+[tasks]
+prove
+cover
+
 [options]
-mode prove
-depth 8
+prove: mode prove
+cover: mode cover
+cover: depth 10
+timeout 1200
 
 [engines]
-smtbmc yices
+prove: abc pdr
+cover: smtbmc yices
 
 [script]
 read_verilog -formal -sv weft_fifo.v weft_fifo_formal.sv
 prep -top weft_fifo_formal
+prove: chformal -cover -remove
 
 [files]
 ../src/weft_fifo.v

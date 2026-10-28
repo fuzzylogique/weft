@@ -46,10 +46,10 @@ runs: 0*1 1*439 0*434 1*434 0*434 1*434 0*434 1*434 0*434 1*434 0*434 1*428     
 | Firmware: blink, selftest, UART TX, UART RX, SPI controller, I2C controller | done, all checked against independent protocol models on the simulator |
 | RTL (Verilog-2005, 9 modules) | done, Verilator `-Wall` clean |
 | Python tests | 53 passing (Hypothesis round trips, ISS semantics, firmware + snapshots) |
-| cocotb RTL tests (host port, lockstep vs ISS on all firmware and 12 random programs, final state via PEEK) | 12 of 12 passing under Verilator |
-| Yosys area against the IHP CMOS5L liberty | 9,462 cells, 225,536 µm² = 41% of the 6x4 budget at 60% density; 2,608 flops |
-| Formal (core, timer, FIFO, UART program) | run locally with Yosys's SAT engine: core 8-cycle BMC passes for every instruction stream; the UART program proof passes (every byte, every bit exactly BIT cycles, 62-cycle bound); timer and FIFO pass bounded checks, induction pending. `formal/README.md` |
-| Tiny Tapeout `gds` action (LibreLane, DRC/LVS, gate-level test) | not yet run: needs the repository on GitHub |
+| cocotb RTL tests (host port, lockstep vs ISS on all firmware and 12 random programs, final state via PEEK) | 13 of 13 passing under Verilator locally, under Icarus in CI, and on the gate-level netlist |
+| Yosys area against the IHP CMOS5L liberty | 224,709 µm² = 41% of the 6x4 budget at 60% density; 2,605 flops. LibreLane placed it at 27% utilization before hold fixing |
+| Formal (core, timer, FIFO, UART program) | run locally with Yosys's SAT engine: core 8-cycle BMC passes for every instruction stream; the UART program proof passes (every byte, every bit exactly BIT cycles, 62-cycle bound); timer and FIFO pass bounded checks, induction pending. The first SymbiYosys CI run hit GitHub's 6-hour limit in one smtbmc task; the workflow now runs one bounded job per proof. `formal/README.md` |
+| Tiny Tapeout `gds` action (LibreLane, DRC/LVS, gate-level test) | builds; DRC, LVS and antenna clean; precheck passed; gate-level suite 13 of 13. Setup is clean at the nominal corner, with violations reported in the slow corner (1.08 V, 125 °C) that still need their slack read from the run artifact. `docs/log/2026-10-28.md` |
 | FPGA build | not attempted |
 
 ## Repository layout

@@ -1,17 +1,33 @@
 # Program-level proof: the core running sw/programs/uart_tx.asm (assembled with
-# BIT=4, the smallest period the per-bit loop allows, so a frame fits the bound) is a correct 8N1 transmitter for EVERY
-# byte value: each of the 10 bits lasts exactly BIT cycles and carries the
-# right value. This verifies hardware and firmware together.
+# BIT=4, the smallest period the per-bit loop allows, so a frame fits the bound)
+# is a correct 8N1 transmitter for EVERY byte value: each of the 10 bits lasts
+# exactly BIT cycles and carries the right value. Hardware and firmware together.
+#   bmc    60-cycle bound; the memories are bit-blasted (memory_map) because the
+#          first CI run with smtbmc on the array model ran past GitHub's 6-hour
+#          limit; abc bmc3 and smtbmc race, first conclusive answer wins
+#   cover  a complete frame (and one for 0xA5) is reachable; CI tolerates a
+#          timeout here
+[tasks]
+bmc
+cover
+
 [options]
-mode bmc
-depth 60
+bmc: mode bmc
+bmc: depth 60
+cover: mode cover
+cover: depth 62
+timeout 2400
 
 [engines]
-smtbmc yices
+bmc: abc bmc3
+bmc: smtbmc yices
+cover: smtbmc yices
 
 [script]
 read_verilog -formal -sv weft_regfile.v weft_timer.v weft_crc.v weft_core.v uart_tx_program.sv
 prep -top uart_tx_program
+memory_map
+opt -fast
 
 [files]
 ../src/weft_regfile.v

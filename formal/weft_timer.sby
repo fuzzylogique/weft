@@ -1,15 +1,25 @@
 # SymbiYosys: the bit timer ticks exactly every PERIOD cycles after TSET.
+#   prove  unbounded, by IC3/PDR (k-induction alone was inconclusive at depth 12)
+#   cover  a tick PERIOD+1 cycles after TSET is reachable
+[tasks]
+prove
+cover
+
 [options]
-mode prove
-depth 12
+prove: mode prove
+cover: mode cover
+cover: depth 12
+timeout 1200
 
 [engines]
-smtbmc yices
+prove: abc pdr
+cover: smtbmc yices
 
 [script]
 read_verilog -formal -sv weft_timer.v weft_timer_formal.sv
 chparam -set PERIOD 3 weft_timer_formal
 prep -top weft_timer_formal
+prove: chformal -cover -remove
 
 [files]
 ../src/weft_timer.v
