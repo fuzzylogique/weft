@@ -32,8 +32,8 @@ what has not.
 | I2C-01 | i2c_master.asm: START, address+W, data, STOP; ACK/NACK reported; target memory written | ISS + I2cTargetModel/I2cMonitor; RTL lockstep | same | ISS and RTL passing |
 | I2C-02 | i2c_master.asm honours clock stretching | ISS with stretching target | `test_programs.py` | passing |
 | SNAP-01 | ASCII waveform snapshots of blink, UART TX, SPI and I2C are stable | expect-test style snapshots | `sw/tests/snapshots/` | passing |
-| GL-01 | Gate-level netlist passes the same cocotb suite | Tiny Tapeout `gds` action, `gl_test` job | GitHub Actions | passing: 13 of 13 on the LibreLane netlist (2026-10-28, run 40717152546) |
-| PD-01 | Fits 6x4 at 50 MHz: utilization under 75%, positive slack, DRC/LVS clean | Tiny Tapeout `gds` action | GitHub Actions | built: placement utilization 27% plus 16.9% hold buffers; DRC, LVS, antenna, hold clean; precheck passed; setup clean at the nominal corner (+5.76 ns) but **−2.68 ns worst slack in the slow corner (1.08 V, 125 °C), 119 endpoints**: meets 44 MHz there, not 50. Fix committed (registered fetch, three-port register file, DJNZ compare, 13 ns implementation clock; ADR-005), awaiting the next run |
+| GL-01 | Gate-level netlist passes the same cocotb suite | Tiny Tapeout `gds` action, `gl_test` job | GitHub Actions | passing: 13 of 13 on the LibreLane netlist, before and after the timing changes (runs 40717152546, 40775224776) |
+| PD-01 | Fits 6x4 at 50 MHz: utilization under 75%, positive slack, DRC/LVS clean | Tiny Tapeout `gds` action | GitHub Actions | built: placement utilization 27% plus 16.9% hold buffers; DRC, LVS, antenna, hold clean; precheck passed; setup clean at the nominal corner (+5.76 ns) but **−2.68 ns worst slack in the slow corner (1.08 V, 125 °C), 119 endpoints**: **fixed (ADR-005): +2.30 ns in the slow corner, +7.79 ns nominal, 0 failing endpoints, signoff at 20 ns** (run 40775224776); 3 max-slew nets in the slow corner remain as warnings |
 | FPGA-01 | Core runs on the iCE40UP5K breakout | `fpga` workflow | GitHub Actions | not attempted |
 
 Methods not yet applied, in the order the research doc suggests: functional and

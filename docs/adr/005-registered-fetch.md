@@ -1,6 +1,8 @@
 # ADR-005: Registered instruction fetch, three register read ports, 13 ns implementation clock
 
-Date: 2026-10-28. Status: accepted, awaiting confirmation from the next GDS run.
+Date: 2026-10-28. Status: accepted and confirmed: the next GDS run (40775224776)
+reported +2.30 ns worst setup slack in the slow corner (from −2.68 ns), +7.79 ns
+nominal, no failing endpoints, with signoff at 20 ns.
 
 Context: the first LibreLane run on IHP CMOS5L (gds run 40717152546) built the
 chip and passed DRC, LVS, precheck and the gate-level tests, but the signoff STA

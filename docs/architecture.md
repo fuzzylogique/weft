@@ -38,7 +38,8 @@ instructions.
   Before these three changes the first GDS run measured the single-cycle chain
   (38 cells: PC, read mux, decode, register read, adder, write-back mux) at
   22.7 ns in the slow corner, 1.08 V and 125 °C, against a 20 ns budget; the
-  chain is now 29 cells in the same synthesis (ADR-005).
+  chain is now 29 cells in the same synthesis, and the second run signed off
+  at +2.30 ns in the slow corner and +7.79 ns nominal (ADR-005).
 - **Determinism contract.** Every instruction takes exactly one cycle except
   WAIT-class instructions (`WAITP`, `WAITR`, `WAITF`, `WAITT`, `PUSH`, `PULL`),
   which hold until their condition is true and complete in the first cycle it
